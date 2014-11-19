@@ -3,6 +3,8 @@
 -export([manage/0]).
 
 manage() ->
+	Tmp = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+	lists:map(fun(X)->glob:registerName(glob:regFormat(X),spawn(tile, tilemain, [X])) end, Tmp),
 	manageloop().
 
 % when receiving the message $senddata, spaw a collector and a broadcaster for the collection of the data
