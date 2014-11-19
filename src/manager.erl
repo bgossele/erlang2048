@@ -7,9 +7,6 @@ manage() ->
 	lists:map(fun(X)->glob:registerName(glob:regformat(X),spawn(tile, tilemain, [X])) end, Tmp),
 	manageloop().
 
-spawnTile(Id) ->
-	spawn(tile, tilemain, [Id]).
-
 % when receiving the message $senddata, spaw a collector and a broadcaster for the collection of the data
 %  from the tiles. Then, once the $Data is collected, inform the lifeguard and the gui
 manageloop() ->
@@ -55,7 +52,7 @@ randomiseatile( Tuple )->
 		_ ->
 			C1 = getCand(0, Tuple),
 			V1 = 2,
-			debug:debug("MANAGER: radomised in ~p.~n",[C1]),
+			debug:debug("MANAGER: randomised in ~p.~n",[C1]),
 			glob:regformat(C1) ! {setvalue, V1, false},
 			Tu = erlang:setelement(C1,Tuple,V1)
 	end,
@@ -80,10 +77,10 @@ collect( N , T) ->
 	case N of
 		16 -> 
 			manager ! {collectedData, T};
-		Num ->
+		_ ->
 			receive
-				{tilevalue, Id, Value, _, _} ->
-					collect( Num+1, erlang:setelement(Id, T, Value))
+				{tilevalue, Id, Value, _} ->
+					collect( N+1, erlang:setelement(Id, T, Value))
 			end
 	end.
 
@@ -93,7 +90,7 @@ broadcaster( 0, _ )->
 broadcaster( N, Mess ) when N < 17 -> 
 	try glob:regformat(N) ! Mess of
 		_ -> 
-			debug:debug("broadcasting to ~p.~n",[N]),
+			%debug:debug("broadcasting to ~p.~n",[N]),
 			ok
 	catch
 		_:F -> 

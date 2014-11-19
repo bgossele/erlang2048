@@ -16,10 +16,14 @@ tilelife(Id, CurrentValue, Merged)->
 	receive
 		die ->
 			debug:debug("I, ~p, die.~n",[Id]),
+			NextValue = CurrentValue,
+			NextMerged = Merged,
 			exit(killed);
 		up ->
-			Neighbours = neighbours(Id,-4),
-			Neighbour_values = lists:map(fun askNeighbour/1, Neighbours),
+			%Neighbours = neighbours(Id,-4),
+			%Neighbour_values = lists:map(fun askNeighbour/1, Neighbours),
+			NextValue = CurrentValue,
+			NextMerged = Merged,
 			propagate(up, Id);
 		%reeds gemergde eruitfilteren
 		%zolang eerste entries value 0 hebben, entry met == value zoeken, daarmee mergen
@@ -29,19 +33,30 @@ tilelife(Id, CurrentValue, Merged)->
 		dn ->
 			%Neighbours = neighbours(Id,4),
 			%Neighbour_values = lists:map(fun askNeighbour/1, Neighbours),
+			NextValue = CurrentValue,
+			NextMerged = Merged,
 			propagate(dn, Id);
 		lx ->
 			%Neighbours = neighbours(Id,-1),
+			NextValue = CurrentValue,
+			NextMerged = Merged,
 			propagate(lx, Id);
 		rx ->
-			Neighbours = neighbours(Id,1),
+			%Neighbours = neighbours(Id,1),
+			NextValue = CurrentValue,
+			NextMerged = Merged,
 			propagate(rx, Id);
 		{yourValue, Repl} ->
+			%debug:debug("~p received yourValue request from ~p~n", [Id, Repl]),
+			NextValue = CurrentValue,
+			NextMerged = Merged,
 			Repl ! {tilevalue, Id, CurrentValue, Merged};
 		{setvalue, Future, NewMerged} ->
-			ok
+			io:format("setValue at ~p, ~p, ~p", [Id, Future, NewMerged]),
+			NextValue = Future,
+			NextMerged = NewMerged
 	end,
-	tilelife(Id, 0, false).
+	tilelife(Id, NextValue, NextMerged).
 
 askNeighbour(Id)->
 	glob:regformat(Id) ! {yourValue, self()},
