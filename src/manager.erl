@@ -4,8 +4,11 @@
 
 manage() ->
 	Tmp = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
-	lists:map(fun(X)->glob:registerName(glob:regFormat(X),spawn(tile, tilemain, [X])) end, Tmp),
+	lists:map(fun(X)->glob:registerName(glob:regformat(X),spawn(tile, tilemain, [X])) end, Tmp),
 	manageloop().
+
+spawnTile(Id) ->
+	spawn(tile, tilemain, [Id]).
 
 % when receiving the message $senddata, spaw a collector and a broadcaster for the collection of the data
 %  from the tiles. Then, once the $Data is collected, inform the lifeguard and the gui
@@ -33,7 +36,7 @@ manageloop() ->
 			% this is the instruction mentioned in the text %
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			PidCollector = spawn( fun() -> collect( 0, Basetuple ) end),
-			register( collector, PidCollector ),
+			glob:registerName( collector, PidCollector ),
 			spawn( fun() -> broadcaster( 16, {yourValue, collector} ) end);
 		{collectedData, TupleData} ->
 			ListData = randomiseatile(TupleData),
