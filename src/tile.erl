@@ -6,34 +6,30 @@ tilemain( Id ) ->
 	tilemain(Id, 0).
 
 tilemain( Id, Value ) ->
-	tilelife(Id, Value, false, ok).
+	tilelife(Id, Value, false).
 
 
 %%%%%%%%%%%%%%%%%
 % fill this out %
 %%%%%%%%%%%%%%%%%
-tilelife(Id, CurrentValue, Merged, Dir)->
+tilelife(Id, CurrentValue, Merged)->
 	receive
 		die ->
 			debug:debug("I, ~p, die.~n",[Id]),
 			NextValue = CurrentValue,
 			NextMerged = Merged,
-			NextDir = Dir,
 			exit(killed);
 		up ->
 			case Merged of
 				true ->
-					NextDir = Dir,
 					propagate(up, Id);
 				false ->
 					Neighbours = neighbours(Id,-4),
 					case length(Neighbours) > 0 of
 						true ->
-							glob:registerName(collectorname(Id),spawn(fun()-> collect(length(Neighbours),0, Id, init_answers_list(Neighbours)) end)),
-							NextDir = up,
+							glob:registerName(collectorname(Id),spawn(fun()-> collect(length(Neighbours),0, Id, init_answers_list(Neighbours), up) end)),
 							lists:map(fun(X) -> glob:regformat(X) ! {yourValue, self()} end, Neighbours);
 						false ->
-							NextDir = Dir,
 							propagate(up, Id)
 					end
 			end,
@@ -44,52 +40,46 @@ tilelife(Id, CurrentValue, Merged, Dir)->
 			%Neighbour_values = lists:map(fun askNeighbour/1, Neighbours),
 			NextValue = CurrentValue,
 			NextMerged = Merged,
-			NextDir = dn,
 			propagate(dn, Id);
 		lx ->
 			%Neighbours = neighbours(Id,-1),
 			NextValue = CurrentValue,
 			NextMerged = Merged,
-			NextDir = lx,
 			propagate(lx, Id);
 		rx ->
 			%Neighbours = neighbours(Id,1),
 			NextValue = CurrentValue,
 			NextMerged = Merged,
-			NextDir = rx,
 			propagate(rx, Id);
 		{yourValue, Repl} ->
 			%debug:debug("~p received yourValue request from ~p~n", [Id, Repl]),
 			NextValue = CurrentValue,
 			NextMerged = Merged,
-			NextDir = Dir,
 			Repl ! {tilevalue, Id, CurrentValue, Merged};
 		{setvalue, Future, NewMerged} ->
 			io:format("setValue at ~p, ~p, ~p", [Id, Future, NewMerged]),
 			NextValue = Future,
-			NextDir = Dir,
 			NextMerged = NewMerged;
-		{neighbouranswers, Answers} ->
+		{neighbouranswers, Answers, Dir} ->
 			%itereren over neighbours en checken in map. Laatst gecheckte bijhouden. Iets is een match als == 0 of zelfde value en niet gemerged.
 			%Als geen match, mergen met vorige neighbour.
 			propagate(Dir, Id),
 			NextValue = CurrentValue,
-			NextDir = ok,
 			NextMerged = Merged
 	end,
-	tilelife(Id, NextValue, NextMerged, NextDir).
+	tilelife(Id, NextValue, NextMerged).
  
 neighbours(TileNo,F)->
 	[TileNo + F*I || I <- [1,2,3], TileNo + F*I > 0, TileNo + F*I < 17].
 	
-collect(N_expected, N, Id, Answers) ->
+collect(N_expected, N, Id, Dir_to_propagate, Answers) ->
 	case N of
 		N_expected ->
-			glob:regformat(Id) ! {neighbouranswers, Answers};
+			glob:regformat(Id) !{neighbouranswers, Answers, Dir_to_propagate};
 		_ ->
 			receive
 				{tilevalue, SenderId, CurrentValue, Merged} ->					 
-					collect(N_expected, N+1, Id, lists:map(fun(X) ->  compare_answer(X, {SenderId, CurrentValue, Merged}) end, Answers))
+					collect(N_expected, N+1, Id, lists:map(fun(X) ->  compare_answer(X, {SenderId, CurrentValue, Merged}) end, Answers), Dir_to_propagate)
 			end
 	end.
 
