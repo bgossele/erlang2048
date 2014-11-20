@@ -20,16 +20,20 @@ tilelife(Id, CurrentValue, Merged)->
 			NextMerged = Merged,
 			exit(killed);
 		up ->
-			%Neighbours = neighbours(Id,-4),
-			%Neighbour_values = lists:map(fun askNeighbour/1, Neighbours),
+			case Merged of
+				true ->
+					propagate(up, Id);
+				false ->
+					%Neighbours = neighbours(Id,-4),
+					%collector spawnen
+					%vraag lanceren
+					%Neighbour_values = lists:map(fun askNeighbour/1, Neighbours),
+					%itereren over neighbours en checken in map. Laatst gecheckte bijhouden. Iets is een match als == 0 of zelfde value en niet gemerged.
+					%Als geen match, mergen met vorige neighbour.
+					ok
+			end,
 			NextValue = CurrentValue,
-			NextMerged = Merged,
-			propagate(up, Id);
-		%reeds gemergde eruitfilteren
-		%zolang eerste entries value 0 hebben, entry met == value zoeken, daarmee mergen
-		%anders naar verste met value 0
-		%anders niets
-		%
+			NextMerged = Merged;
 		dn ->
 			%Neighbours = neighbours(Id,4),
 			%Neighbour_values = lists:map(fun askNeighbour/1, Neighbours),
@@ -54,7 +58,12 @@ tilelife(Id, CurrentValue, Merged)->
 		{setvalue, Future, NewMerged} ->
 			io:format("setValue at ~p, ~p, ~p", [Id, Future, NewMerged]),
 			NextValue = Future,
-			NextMerged = NewMerged
+			NextMerged = NewMerged;
+		{neighbouranswers, M} ->
+			%itereren over neighbours en checken in map. Laatst gecheckte bijhouden. Iets is een match als == 0 of zelfde value en niet gemerged.
+			%Als geen match, mergen met vorige neighbour.
+			NextValue = CurrentValue,
+			NextMerged = Merged
 	end,
 	tilelife(Id, NextValue, NextMerged).
 
@@ -72,7 +81,6 @@ neighbours(TileNo,F)->
 collect(N_expected, N, Id, M) ->
 	case N of
 		N_expected ->
-			%send results to tile Id
 			glob:regformat(Id) ! {neighbouranswers, M};
 		_ ->
 			receive
