@@ -68,7 +68,24 @@ askNeighbour(Id)->
  
 neighbours(TileNo,F)->
 	[TileNo + F*I || I <- [1,2,3], TileNo + F*I > 0, TileNo + F*I < 17].
-
+	
+collect(N_expected, N, Id, T) ->
+	case N of
+		N_expected ->
+			%send results to tile Id
+			ok;
+		_ ->
+			receive
+				{tilevalue, SenderId, CurrentValue, Merged} ->
+					%put in right place in tuple or list or whatever
+					%collect(N_expected, N+1, Id, T*)
+					ok
+			end
+	end.
+	
+collectorname(Id) ->
+	list_to_atom(string:concat("collector",integer_to_list(Id))).
+	
 propagate(Dir, TileNo)->
 	case end_of_board(Dir, TileNo) of
 		false ->
@@ -93,6 +110,8 @@ end_of_board(Dir, TileNo)->
 		rx ->
 			(TileNo - 1) rem 4 == 0
 	end.
+	
+
 
 format_list(L) ->
         io:format("["),
