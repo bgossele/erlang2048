@@ -69,17 +69,15 @@ askNeighbour(Id)->
 neighbours(TileNo,F)->
 	[TileNo + F*I || I <- [1,2,3], TileNo + F*I > 0, TileNo + F*I < 17].
 	
-collect(N_expected, N, Id, T) ->
+collect(N_expected, N, Id, M) ->
 	case N of
 		N_expected ->
 			%send results to tile Id
-			ok;
+			glob:regformat(Id) ! {neighbouranswers, M};
 		_ ->
 			receive
-				{tilevalue, SenderId, CurrentValue, Merged} ->
-					%put in right place in tuple or list or whatever
-					%collect(N_expected, N+1, Id, T*)
-					ok
+				{tilevalue, SenderId, CurrentValue, Merged} ->					 
+					collect(N_expected, N+1, Id, maps:put(SenderId, {CurrentValue, Merged}, M))
 			end
 	end.
 	
