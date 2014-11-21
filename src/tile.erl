@@ -1,6 +1,6 @@
 -module(tile).
 
--export([tilemain/1, format_list/1]).
+-export([tilemain/1]).
 
 tilemain( Id ) ->
 	tilemain(Id, 0).
@@ -20,22 +20,9 @@ tilelife(Id, CurrentValue, Merged)->
 			NextMerged = Merged,
 			exit(killed);
 		up ->
-			%debug:debug("up at ~p~n", [Id]),
-			case (Merged) orelse (CurrentValue == 0) of
-				true ->
-					propagate(up, Id);
-				false ->
-					Neighbours = neighbours(Id,-4),
-					case length(Neighbours) > 0 of
-						true ->
-							glob:registerName(collectorname(Id),spawn(fun()-> collect(length(Neighbours),0, Id, up, init_answers_list(Neighbours)) end)),
-							lists:map(fun(X) -> glob:regformat(X) ! {yourValue, collectorname(Id)} end, Neighbours);
-						false ->
-							propagate(up, Id)
-					end
-			end,
+			
 			NextValue = CurrentValue,
-			NextMerged = false;
+			NextMerged = Merged;
 		dn ->
 			%Neighbours = neighbours(Id,4),
 			%Neighbour_values = lists:map(fun askNeighbour/1, Neighbours),
@@ -79,11 +66,26 @@ tilelife(Id, CurrentValue, Merged)->
 			propagate(Dir, Id)
 	end,
 	tilelife(Id, NextValue, NextMerged).
- 
-neighbours(TileNo,F)->
+
+direction_routine(Id, Dir, CurrentValue, Merged) ->
+ 	case (Merged) orelse (CurrentValue == 0) of
+		true ->
+			propagate(up, Id);
+		false ->
+			Neighbours = neighbours(Id,Dir),
+			case length(Neighbours) > 0 of
+				true ->
+					glob:registerName(collectorname(Id),spawn(fun()-> collect(length(Neighbours),0, Id, Dir, init_answers_list(Neighbours)) end)),
+					lists:map(fun(X) -> glob:regformat(X) ! {yourValue, collectorname(Id)} end, Neighbours);
+				false ->
+					propagate(Dir, Id)
+			end
+	end.
+
+neighbours(TileNo,Dir)->
+	F = dir_factor(Dir),
 	[TileNo + F*I || I <- [1,2,3], TileNo + F*I > 0, TileNo + F*I < 17].
 	
-
 find_match(Neighbours, Value, PrevMatch, PrevValue)->
 	%debug:debug("find_match: #Neighbours = ~p; ~p; ~p; ~p~n", [length(Neighbours), Value, PrevMatch, PrevValue]),
 	case Neighbours of
@@ -137,16 +139,19 @@ collectorname(Id) ->
 propagate(Dir, TileNo)->
 	case end_of_board(Dir, TileNo) of
 		false ->
-			case Dir of
-				up -> glob:regformat(TileNo+4) ! up;
-				dn -> glob:regformat(TileNo-4) ! dn;
-				lx -> glob:regformat(TileNo+1) ! lx;
-				rx -> glob:regformat(TileNo-1) ! rx
-			end;
+			glob:regformat(TileNo-dir_factor(Dir)) ! Dir;
 		true ->
 			ok
 	end.
-			
+	
+dir_factor(Dir)->
+	case Dir of
+		up -> -4;
+		dn -> 4;
+		lx -> -1;
+		rx -> 1
+	end.
+		
 end_of_board(Dir, TileNo)->
 	case Dir of
 		up ->
@@ -159,17 +164,3 @@ end_of_board(Dir, TileNo)->
 			(TileNo - 1) rem 4 == 0
 	end.
 	
-
-
-format_list(L) ->
-        io:format("["),
-        fnl(L),
-        io:format("]~n").
-
-fnl([H]) ->
-	io:format("~p", [H]);
-fnl([H|T]) ->
-        io:format("~p,", [H]),
-	fnl(T);
-fnl([]) ->
-        ok.
