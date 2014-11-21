@@ -52,7 +52,7 @@ randomiseatile( Tuple )->
 		_ ->
 			C1 = getCand(0, Tuple),
 			V1 = 2,
-			debug:debug("MANAGER: randomised in ~p.~n",[C1]),
+		%	debug:debug("MANAGER: randomised in ~p.~n",[C1]),
 			glob:regformat(C1) ! {setvalue, V1, false},
 			Tu = erlang:setelement(C1,Tuple,V1)
 	end,
