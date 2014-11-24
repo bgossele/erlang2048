@@ -1,6 +1,6 @@
 -module(glob).
 
--export([regformat/1,registerName/2,indexof/2,zeroesintuple/1]).
+-export([regformat/1,registerName/2,indexof/2,zeroesintuple/1,format_list/1, takewhile/2, test/0]).
 
 % centralised register function, to ensure that registered names have the same format
 regformat( Number ) ->
@@ -39,3 +39,16 @@ zeroesintuple( T, N, Acc)->
 		0 -> zeroesintuple(T, N-1, Acc+1);
 		_ -> zeroesintuple(T, N-1, Acc)
 	end.
+	
+format_list(L) when list(L) ->
+        io:format("["),
+        fnl(L),
+        io:format("]~n").
+
+fnl([H]) ->
+    io:format("~p", [H]);
+fnl([H|T]) ->
+    io:format("~p,", [H]),
+    fnl(T);
+fnl([]) ->
+        ok.

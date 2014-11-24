@@ -1,6 +1,6 @@
 -module(tile).
 
--export([tilemain/1]).
+-export([tilemain/1, neighbourstest/1, neighbours/2]).
 
 tilemain( Id ) ->
 	tilemain(Id, 0).
@@ -20,25 +20,21 @@ tilelife(Id, CurrentValue, Merged)->
 			NextMerged = Merged,
 			exit(killed);
 		up ->
-			
+			direction_routine(Id, up, CurrentValue, Merged),
 			NextValue = CurrentValue,
 			NextMerged = Merged;
 		dn ->
-			%Neighbours = neighbours(Id,4),
-			%Neighbour_values = lists:map(fun askNeighbour/1, Neighbours),
+			direction_routine(Id, dn, CurrentValue, Merged),
 			NextValue = CurrentValue,
-			NextMerged = Merged,
-			propagate(dn, Id);
+			NextMerged = Merged;
 		lx ->
-			%Neighbours = neighbours(Id,-1),
+			direction_routine(Id, lx, CurrentValue, Merged),
 			NextValue = CurrentValue,
-			NextMerged = Merged,
-			propagate(lx, Id);
+			NextMerged = Merged;
 		rx ->
-			%Neighbours = neighbours(Id,1),
+			direction_routine(Id, rx, CurrentValue, Merged),
 			NextValue = CurrentValue,
-			NextMerged = Merged,
-			propagate(rx, Id);
+			NextMerged = Merged;
 		{yourValue, Repl} ->
 			%debug:debug("~p received yourValue request from ~p~n", [Id, Repl]),
 			NextValue = CurrentValue,
@@ -58,7 +54,7 @@ tilelife(Id, CurrentValue, Merged)->
 				0 ->
 					NextValue = CurrentValue,
 					NextMerged = Merged;
-				_ ->
+				_ ->                                     %true moet nog vervangen worden.
 					glob:regformat(MatchId) ! {setvalue, CurrentValue + MatchValue, true},
 					NextValue = 0,
 					NextMerged = Merged
@@ -70,7 +66,7 @@ tilelife(Id, CurrentValue, Merged)->
 direction_routine(Id, Dir, CurrentValue, Merged) ->
  	case (Merged) orelse (CurrentValue == 0) of
 		true ->
-			propagate(up, Id);
+			propagate(Dir, Id);
 		false ->
 			Neighbours = neighbours(Id,Dir),
 			case length(Neighbours) > 0 of
@@ -84,7 +80,19 @@ direction_routine(Id, Dir, CurrentValue, Merged) ->
 
 neighbours(TileNo,Dir)->
 	F = dir_factor(Dir),
-	[TileNo + F*I || I <- [1,2,3], TileNo + F*I > 0, TileNo + F*I < 17].
+	lists:takewhile(fun(X)->(not end_of_board(Dir,X)) end,[TileNo + F*I || I <- [1,2,3], TileNo + F*I > 0, TileNo + F*I < 17]).
+
+end_of_board(Dir, TileNo)->
+	case Dir of
+		up ->
+			TileNo > 12;
+		dn ->
+			TileNo < 5;
+		lx ->
+			TileNo rem 4 == 0;
+		rx ->
+			(TileNo - 1) rem 4 == 0
+end.
 	
 find_match(Neighbours, Value, PrevMatch, PrevValue)->
 	%debug:debug("find_match: #Neighbours = ~p; ~p; ~p; ~p~n", [length(Neighbours), Value, PrevMatch, PrevValue]),
@@ -151,16 +159,9 @@ dir_factor(Dir)->
 		lx -> -1;
 		rx -> 1
 	end.
-		
-end_of_board(Dir, TileNo)->
-	case Dir of
-		up ->
-			TileNo > 12;
-		dn ->
-			TileNo < 5;
-		lx ->
-			TileNo rem 4 == 0;
-		rx ->
-			(TileNo - 1) rem 4 == 0
-	end.
-	
+
+list16() ->
+	[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].
+
+neighbourstest(Dir) ->
+	lists:map(fun(X)->glob:format_list(neighbours(X,Dir)) end, list16()).

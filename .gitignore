@@ -10,6 +10,7 @@ rel/example_project
 .rebar
 *.swp
 
+#screenshots
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
