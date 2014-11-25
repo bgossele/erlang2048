@@ -145,6 +145,7 @@ collectorname(Id) ->
 	list_to_atom(string:concat("collector",integer_to_list(Id))).
 	
 propagate(Dir, TileNo)->
+	manager ! {tileReady, TileNo},
 	case end_of_board(Dir, TileNo) of
 		false ->
 			glob:regformat(TileNo-dir_factor(Dir)) ! Dir;

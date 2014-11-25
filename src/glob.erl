@@ -1,6 +1,6 @@
 -module(glob).
 
--export([regformat/1,registerName/2,indexof/2,zeroesintuple/1,format_list/1, takewhile/2, test/0]).
+-export([regformat/1,registerName/2,indexof/2,zeroesintuple/1,format_list/1]).
 
 % centralised register function, to ensure that registered names have the same format
 regformat( Number ) ->

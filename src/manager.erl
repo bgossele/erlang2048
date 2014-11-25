@@ -5,41 +5,66 @@
 manage() ->
 	Tmp = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
 	lists:map(fun(X)->glob:registerName(glob:regformat(X),spawn(tile, tilemain, [X])) end, Tmp),
-	manageloop().
+	manageloop(16, false).
 
 % when receiving the message $senddata, spaw a collector and a broadcaster for the collection of the data
 %  from the tiles. Then, once the $Data is collected, inform the lifeguard and the gui
-manageloop() ->
+manageloop(TilesReady, SendDataRequestPending) ->
 	receive
 		up ->
 			Tmp = [1,2,3,4],
+			NewTilesReady = TilesReady,
+			SDRP = SendDataRequestPending,
 			lists:map(fun(X) -> glob:regformat(X) ! up end, Tmp);
 		dn ->
 			Tmp = [13,14,15,16],
+			NewTilesReady = TilesReady,
+			SDRP = SendDataRequestPending,
 			lists:map(fun(X) -> glob:regformat(X) ! dn end, Tmp);
 		lx ->
 			Tmp = [1,5,9,13],
+			NewTilesReady = TilesReady,
+			SDRP = SendDataRequestPending,
 			lists:map(fun(X) -> glob:regformat(X) ! lx end, Tmp);
 		rx ->
 			Tmp = [4,8,12,16],
+			NewTilesReady = TilesReady,
+			SDRP = SendDataRequestPending,
 			lists:map(fun(X) -> glob:regformat(X) ! rx end, Tmp);
+		{tileReady, Id} ->
+			debug:debug("tile ~p is ready~n", [Id]),
+			case (TilesReady == 15) andalso (SendDataRequestPending) of
+				true ->
+					NewTilesReady = 0,
+					SDRP = false,
+					launchcollector();
+				false ->
+					NewTilesReady = TilesReady + 1,
+					SDRP = SendDataRequestPending
+			end;					
 		sendData ->
-			Basetuple = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-			% this is the instruction mentioned in the text %
-			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-			timer:sleep(700),
-			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-			% this is the instruction mentioned in the text %
-			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-			PidCollector = spawn( fun() -> collect( 0, Basetuple ) end),
-			glob:registerName( collector, PidCollector ),
-			spawn( fun() -> broadcaster( 16, {yourValue, collector} ) end);
+			case TilesReady == 16 of
+				true ->
+					NewTilesReady = 0,
+					SDRP = false,
+					launchcollector();
+				false ->
+					NewTilesReady = TilesReady,
+					SDRP = true
+			end;		
 		{collectedData, TupleData} ->
 			ListData = randomiseatile(TupleData),
-			gui ! {values, ListData}
+			gui ! {values, ListData},
+			SDRP = SendDataRequestPending,
+			NewTilesReady = TilesReady
 	end,
-	manageloop().
+	manageloop(NewTilesReady, SDRP).
+
+launchcollector() ->
+	Basetuple = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+	PidCollector = spawn( fun() -> collect( 0, Basetuple ) end),
+	glob:registerName( collector, PidCollector ),
+	spawn( fun() -> broadcaster( 16, {yourValue, collector} ) end).
 
 % takes a tuple of data in input and returns it in a list format
 % with two elements that were at 0 now randomised at 2
