@@ -1,3 +1,5 @@
+% Author: Brecht Gosselé, r0259849
+
 -module(tile).
 
 -export([tilelife/3]).

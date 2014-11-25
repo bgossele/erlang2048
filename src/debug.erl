@@ -1,3 +1,5 @@
+% Author: Brecht Gosselé, r0259849
+
 -module(debug).
 
 -export([debug/2,simp/0]).

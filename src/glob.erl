@@ -1,3 +1,5 @@
+% Author: Brecht Gosselé, r0259849
+
 -module(glob).
 
 -export([regformat/1,registerName/2,indexof/2,zeroesintuple/1,format_list/1]).
