@@ -55,7 +55,7 @@ tilelife(Id, CurrentValue, Merged)->
 					NextValue = CurrentValue,
 					NextMerged = Merged;
 				_ ->                                     %true moet nog vervangen worden.
-					glob:regformat(MatchId) ! {setvalue, CurrentValue + MatchValue, true},
+					glob:regformat(MatchId) ! {setvalue, CurrentValue + MatchValue, MatchValue > 0},
 					NextValue = 0,
 					NextMerged = Merged
 			end,
