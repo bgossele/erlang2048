@@ -1,24 +1,14 @@
 -module(tile).
 
--export([tilemain/1, neighbourstest/1, neighbours/2]).
+-export([tilelife/3]).
 
-tilemain( Id ) ->
-	tilemain(Id, 0).
-
-tilemain( Id, Value ) ->
-	tilelife(Id, Value, false).
-
-
-%%%%%%%%%%%%%%%%%
-% fill this out %
-%%%%%%%%%%%%%%%%%
 tilelife(Id, CurrentValue, Merged)->
 	receive
 		die ->
 			debug:debug("I, ~p, die.~n",[Id]),
 			NextValue = CurrentValue,
 			NextMerged = Merged,
-			exit(killed);
+			exit({killed, Id, CurrentValue, Merged});
 		up ->
 			direction_routine(Id, up, CurrentValue, Merged),
 			NextValue = CurrentValue,
@@ -44,7 +34,7 @@ tilelife(Id, CurrentValue, Merged)->
 			end,
 			Repl ! {tilevalue, Id, CurrentValue, Merged};
 		{setvalue, Future, NewMerged} ->
-			debug:debug("setvalue at ~p, ~p, ~p~n", [Id, Future, NewMerged]),
+			%debug:debug("setvalue at ~p, ~p, ~p~n", [Id, Future, NewMerged]),
 			NextValue = Future,
 			NextMerged = NewMerged;
 		{neighbouranswers, Answers, Dir} ->
@@ -142,13 +132,13 @@ init_answers_list(L) ->
 	lists:map(fun(X) -> {X, 0, false} end, L).
 	
 collectorname(Id) ->
-	list_to_atom(string:concat("collector",integer_to_list(Id))).
+	list_to_atom(string:concat("collector", integer_to_list(Id))).
 	
 propagate(Dir, TileNo)->
 	manager ! {tileReady, TileNo},
 	case end_of_board(Dir, TileNo) of
 		false ->
-			glob:regformat(TileNo-dir_factor(Dir)) ! Dir;
+			glob:regformat(TileNo - dir_factor(Dir)) ! Dir;
 		true ->
 			ok
 	end.
@@ -161,8 +151,3 @@ dir_factor(Dir)->
 		rx -> 1
 	end.
 
-list16() ->
-	[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].
-
-neighbourstest(Dir) ->
-	lists:map(fun(X)->glob:format_list(neighbours(X,Dir)) end, list16()).

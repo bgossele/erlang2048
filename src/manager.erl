@@ -4,10 +4,11 @@
 
 manage() ->
 	Tmp = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
-	lists:map(fun(X)->glob:registerName(glob:regformat(X),spawn(tile, tilemain, [X])) end, Tmp),
+	lists:map(fun(X)->launchtile(X, 0, false) end, Tmp),
+	process_flag(trap_exit, true),
 	manageloop(16, false).
 
-% when receiving the message $senddata, spaw a collector and a broadcaster for the collection of the data
+% when receiving the message $senddata, spawn a collector and a broadcaster for the collection of the data
 %  from the tiles. Then, once the $Data is collected, inform the lifeguard and the gui
 manageloop(TilesReady, SendDataRequestPending) ->
 	receive
@@ -56,9 +57,17 @@ manageloop(TilesReady, SendDataRequestPending) ->
 			ListData = randomiseatile(TupleData),
 			gui ! {values, ListData},
 			SDRP = SendDataRequestPending,
-			NewTilesReady = TilesReady
+			NewTilesReady = TilesReady;
+		{'EXIT',_,{killed, Id, Value, Merged}} ->
+			debug:debug("Tile ~p killed~n", [Id]),
+			launchtile(Id, Value, Merged),
+			SDRP = SendDataRequestPending,
+			NewTilesReady = TilesReady 
 	end,
 	manageloop(NewTilesReady, SDRP).
+
+launchtile(Id, Value, Merged) ->
+	glob:registerName(glob:regformat(Id),spawn_link(tile, tilelife, [Id, Value, Merged])).
 
 launchcollector() ->
 	Basetuple = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
