@@ -2,7 +2,7 @@
 
 -module(glob).
 
--export([regformat/1,registerName/2,indexof/2,zeroesintuple/1,format_list/1]).
+-export([regformat/1,registerName/2,indexof/2,zeroesintuple/1,format_list/1,sendToTile/2]).
 
 % centralised register function, to ensure that registered names have the same format
 regformat( Number ) ->
@@ -54,3 +54,14 @@ fnl([H|T]) ->
     fnl(T);
 fnl([]) ->
         ok.
+
+sendToTile(Id, Message) ->
+	try
+		glob:regformat(Id) ! Message
+	of
+		_ -> ok
+	catch
+		error:_ -> 
+			debug:debug("error sending to ~p~n", [Id]),
+			sendToTile(Id, Message)
+	end.

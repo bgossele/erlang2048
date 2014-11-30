@@ -8,7 +8,7 @@ blast()->
     random:seed(V1, V2, V3),
     register(blaster,self()),
     timer:sleep(1200),			% let the game start
-    blastloop(25).				% then blast
+    blastloop(2).				% then blast
 
 % receive loop of the blaster
 % if it receives a message, it stops
@@ -17,13 +17,13 @@ blastloop( Chance )->
 	receive
 		_ -> ok
 	after
-		150 ->
+		5 ->
     	   	R = random:uniform(Chance),
     	   	case R of
     			2 ->
     				Num = glob:regformat(random:uniform(16)),		
     				%debug:debug
-    				io:format("BLASTER: Killing tile: ~p! ~n",[Num]),
+    				%io:format("BLASTER: Killing tile: ~p! ~n",[Num]),
     				case whereis(Num) of
 						undefined ->
 							debug:debug("BLASTER: Could not locate tile ~p.~n",[Num]);

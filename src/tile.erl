@@ -7,7 +7,7 @@
 tilelife(Id, CurrentValue, Merged)->
 	receive
 		die ->
-			debug:debug("I, ~p, die.~n",[Id]),
+			%debug:debug("I, ~p, die.~n",[Id]),
 			NextValue = CurrentValue,
 			NextMerged = Merged,
 			exit({killed, Id, CurrentValue, Merged});
@@ -28,7 +28,6 @@ tilelife(Id, CurrentValue, Merged)->
 			NextValue = CurrentValue,
 			NextMerged = Merged;
 		{yourValue, Repl} ->
-			%debug:debug("~p received yourValue request from ~p~n", [Id, Repl]),
 			NextValue = CurrentValue,
 			case Repl of
 				collector -> NextMerged = false;
@@ -36,18 +35,16 @@ tilelife(Id, CurrentValue, Merged)->
 			end,
 			Repl ! {tilevalue, Id, CurrentValue, Merged};
 		{setvalue, Future, NewMerged} ->
-			%debug:debug("setvalue at ~p, ~p, ~p~n", [Id, Future, NewMerged]),
 			NextValue = Future,
 			NextMerged = NewMerged;
 		{neighbouranswers, Answers, Dir} ->
 			{MatchId, MatchValue} = find_match(Answers, CurrentValue, 0, 0),
-			%debug:debug("match = ~p; ~p~n", [MatchId, MatchValue]),
 			case MatchId of 
 				0 ->
 					NextValue = CurrentValue,
 					NextMerged = Merged;
-				_ ->                                     %true moet nog vervangen worden.
-					glob:regformat(MatchId) ! {setvalue, CurrentValue + MatchValue, MatchValue > 0},
+				_ ->                          
+					glob:sendToTile(MatchId, {setvalue, CurrentValue + MatchValue, MatchValue > 0}),
 					NextValue = 0,
 					NextMerged = Merged
 			end,
@@ -64,7 +61,7 @@ direction_routine(Id, Dir, CurrentValue, Merged) ->
 			case length(Neighbours) > 0 of
 				true ->
 					glob:registerName(collectorname(Id),spawn(fun()-> collect(length(Neighbours),0, Id, Dir, init_answers_list(Neighbours)) end)),
-					lists:map(fun(X) -> glob:regformat(X) ! {yourValue, collectorname(Id)} end, Neighbours);
+					lists:map(fun(X) -> glob:sendToTile(X, {yourValue, collectorname(Id)}) end, Neighbours);
 				false ->
 					propagate(Dir, Id)
 			end
@@ -107,13 +104,12 @@ find_match(Neighbours, Value, PrevMatch, PrevValue)->
 	end.
 
 ismatch({_, Candidate_value, Merged},Value) ->
-	%debug:debug("ismatch ~p; ~p; ~p~n", [Candidate_value, Merged, Value]),
 	(Candidate_value == 0) orelse ((Candidate_value == Value) andalso (not Merged)). 
 
 collect(N_expected, N, Id, Dir_to_propagate, Answers) ->
 	case N of
 		N_expected ->
-			glob:regformat(Id) !{neighbouranswers, Answers, Dir_to_propagate};
+			glob:sendToTile(Id, {neighbouranswers, Answers, Dir_to_propagate});
 		_ ->
 			receive
 				{tilevalue, SenderId, CurrentValue, Merged} ->
@@ -137,10 +133,10 @@ collectorname(Id) ->
 	list_to_atom(string:concat("collector", integer_to_list(Id))).
 	
 propagate(Dir, TileNo)->
-	manager ! {tileReady, TileNo},
+	manager ! tileReady,
 	case end_of_board(Dir, TileNo) of
 		false ->
-			glob:regformat(TileNo - dir_factor(Dir)) ! Dir;
+			glob:sendToTile(TileNo - dir_factor(Dir), Dir);
 		true ->
 			ok
 	end.

@@ -6,7 +6,7 @@
 
 manage() ->
 	Tmp = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
-	lists:map(fun(X)->launchtile(X, 0, false) end, Tmp),
+	lists:map(fun(X) -> launchtile(X, 0, false) end, Tmp),
 	process_flag(trap_exit, true),
 	manageloop(16, false).
 
@@ -18,24 +18,23 @@ manageloop(TilesReady, SendDataRequestPending) ->
 			Tmp = [1,2,3,4],
 			NewTilesReady = TilesReady,
 			SDRP = SendDataRequestPending,
-			lists:map(fun(X) -> glob:regformat(X) ! up end, Tmp);
+			lists:map(fun(X) -> glob:sendToTile(X, up) end, Tmp);
 		dn ->
 			Tmp = [13,14,15,16],
 			NewTilesReady = TilesReady,
 			SDRP = SendDataRequestPending,
-			lists:map(fun(X) -> glob:regformat(X) ! dn end, Tmp);
+			lists:map(fun(X) -> glob:sendToTile(X, dn) end, Tmp);
 		lx ->
 			Tmp = [1,5,9,13],
 			NewTilesReady = TilesReady,
 			SDRP = SendDataRequestPending,
-			lists:map(fun(X) -> glob:regformat(X) ! lx end, Tmp);
+			lists:map(fun(X) -> glob:sendToTile(X, lx) end, Tmp);
 		rx ->
 			Tmp = [4,8,12,16],
 			NewTilesReady = TilesReady,
 			SDRP = SendDataRequestPending,
-			lists:map(fun(X) -> glob:regformat(X) ! rx end, Tmp);
-		{tileReady, Id} ->
-			debug:debug("tile ~p is ready~n", [Id]),
+			lists:map(fun(X) -> glob:sendToTile(X, rx) end, Tmp);
+		tileReady ->
 			case (TilesReady == 15) andalso (SendDataRequestPending) of
 				true ->
 					NewTilesReady = 0,
@@ -61,7 +60,6 @@ manageloop(TilesReady, SendDataRequestPending) ->
 			SDRP = SendDataRequestPending,
 			NewTilesReady = TilesReady;
 		{'EXIT',_,{killed, Id, Value, Merged}} ->
-			debug:debug("Tile ~p killed~n", [Id]),
 			launchtile(Id, Value, Merged),
 			SDRP = SendDataRequestPending,
 			NewTilesReady = TilesReady 
@@ -88,8 +86,8 @@ randomiseatile( Tuple )->
 		_ ->
 			C1 = getCand(0, Tuple),
 			V1 = 2,
-		%	debug:debug("MANAGER: randomised in ~p.~n",[C1]),
-			glob:regformat(C1) ! {setvalue, V1, false},
+			%debug:debug("MANAGER: randomised in ~p.~n",[C1]),
+			glob:sendToTile(C1, {setvalue, V1, false}),
 			Tu = erlang:setelement(C1,Tuple,V1)
 	end,
 	erlang:tuple_to_list(Tu).
@@ -124,7 +122,7 @@ collect( N , T) ->
 broadcaster( 0, _ )->
 	ok;
 broadcaster( N, Mess ) when N < 17 -> 
-	try glob:regformat(N) ! Mess of
+	try glob:sendToTile(N, Mess) of
 		_ -> 
 			%debug:debug("broadcasting to ~p.~n",[N]),
 			ok
