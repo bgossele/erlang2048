@@ -8,7 +8,7 @@ blast()->
     random:seed(V1, V2, V3),
     register(blaster,self()),
     timer:sleep(1200),			% let the game start
-    blastloop(2).				% then blast
+    blastloop(25).				% then blast
 
 % receive loop of the blaster
 % if it receives a message, it stops
@@ -17,7 +17,7 @@ blastloop( Chance )->
 	receive
 		_ -> ok
 	after
-		5 ->
+		150 ->
     	   	R = random:uniform(Chance),
     	   	case R of
     			2 ->
