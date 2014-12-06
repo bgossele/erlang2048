@@ -30,7 +30,7 @@ tilelife(Id, CurrentValue, Merged)->
 		{yourValue, Repl} ->
 			NextValue = CurrentValue,
 			case Repl of
-				collector -> NextMerged = false;
+				collector -> NextMerged = false; %tile now knows the round is over. Reset to false for next round.
 				_ -> NextMerged = Merged
 			end,
 			Repl ! {tilevalue, Id, CurrentValue, Merged};
@@ -52,11 +52,12 @@ tilelife(Id, CurrentValue, Merged)->
 	end,
 	tilelife(Id, NextValue, NextMerged).
 
+
 direction_routine(Id, Dir, CurrentValue, Merged) ->
- 	case (Merged) orelse (CurrentValue == 0) of
-		true ->
+ 	case (Merged) orelse (CurrentValue == 0) of 
+		true -> %If already merged or empty, do nothing.
 			propagate(Dir, Id);
-		false ->
+		false -> %Check if neighbouring tiles are available and merge if possible.
 			Neighbours = neighbours(Id,Dir),
 			case length(Neighbours) > 0 of
 				true ->
@@ -67,10 +68,12 @@ direction_routine(Id, Dir, CurrentValue, Merged) ->
 			end
 	end.
 
+%get list of neighbours in indicated direction
 neighbours(TileNo,Dir)->
 	F = dir_factor(Dir),
 	lists:takewhile(fun(X)->(not end_of_board(Dir,X)) end,[TileNo + F*I || I <- [1,2,3], TileNo + F*I > 0, TileNo + F*I < 17]).
 
+%indicates whether a tile is on the edge of the board in indicated direction
 end_of_board(Dir, TileNo)->
 	case Dir of
 		up ->
@@ -82,9 +85,9 @@ end_of_board(Dir, TileNo)->
 		rx ->
 			(TileNo - 1) rem 4 == 0
 end.
-	
+
+%iterate over the neighbours and find the one to merge with	
 find_match(Neighbours, Value, PrevMatch, PrevValue)->
-	%debug:debug("find_match: #Neighbours = ~p; ~p; ~p; ~p~n", [length(Neighbours), Value, PrevMatch, PrevValue]),
 	case Neighbours of
 		[] -> {PrevMatch, PrevValue};
 		[N] ->
@@ -112,12 +115,12 @@ collect(N_expected, N, Id, Dir_to_propagate, Answers) ->
 			glob2:sendToTile(Id, {neighbouranswers, Answers, Dir_to_propagate});
 		_ ->
 			receive
-				{tilevalue, SenderId, CurrentValue, Merged} ->
-					%debug:debug("Collector of ~p received ~p; ~p; ~p~n",[Id, SenderId, CurrentValue, Merged]),					 
+				{tilevalue, SenderId, CurrentValue, Merged} ->					 
 					collect(N_expected, N+1, Id, Dir_to_propagate, lists:map(fun(X) ->  compare_answer(X, {SenderId, CurrentValue, Merged}) end, Answers))
 			end
 	end.
 
+%update tuple to correct values if Id matches.
 compare_answer({Id, V, M},{Id2, CurrentValue, Merged}) ->
 	case Id == Id2 of
 		true ->
@@ -133,8 +136,8 @@ collectorname(Id) ->
 	list_to_atom(string:concat("collector", integer_to_list(Id))).
 	
 propagate(Dir, TileNo)->
-	manager ! tileReady,
-	case end_of_board(Dir, TileNo) of
+	manager ! tileReady, %indicate computation is over
+	case end_of_board(Dir, TileNo) of %send command to next tile (if there is one).
 		false ->
 			glob2:sendToTile(TileNo - dir_factor(Dir), Dir);
 		true ->
