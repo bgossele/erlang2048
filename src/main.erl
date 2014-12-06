@@ -1,5 +1,3 @@
-% Author: Brecht Gosselé, r0259849
-
 -module(main).
 
 -export([play/0,playnoblaster/0]).

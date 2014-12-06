@@ -44,7 +44,7 @@ tilelife(Id, CurrentValue, Merged)->
 					NextValue = CurrentValue,
 					NextMerged = Merged;
 				_ ->                          
-					glob:sendToTile(MatchId, {setvalue, CurrentValue + MatchValue, MatchValue > 0}),
+					glob2:sendToTile(MatchId, {setvalue, CurrentValue + MatchValue, MatchValue > 0}),
 					NextValue = 0,
 					NextMerged = Merged
 			end,
@@ -61,7 +61,7 @@ direction_routine(Id, Dir, CurrentValue, Merged) ->
 			case length(Neighbours) > 0 of
 				true ->
 					glob:registerName(collectorname(Id),spawn(fun()-> collect(length(Neighbours),0, Id, Dir, init_answers_list(Neighbours)) end)),
-					lists:map(fun(X) -> glob:sendToTile(X, {yourValue, collectorname(Id)}) end, Neighbours);
+					lists:map(fun(X) -> glob2:sendToTile(X, {yourValue, collectorname(Id)}) end, Neighbours);
 				false ->
 					propagate(Dir, Id)
 			end
@@ -109,7 +109,7 @@ ismatch({_, Candidate_value, Merged},Value) ->
 collect(N_expected, N, Id, Dir_to_propagate, Answers) ->
 	case N of
 		N_expected ->
-			glob:sendToTile(Id, {neighbouranswers, Answers, Dir_to_propagate});
+			glob2:sendToTile(Id, {neighbouranswers, Answers, Dir_to_propagate});
 		_ ->
 			receive
 				{tilevalue, SenderId, CurrentValue, Merged} ->
@@ -136,7 +136,7 @@ propagate(Dir, TileNo)->
 	manager ! tileReady,
 	case end_of_board(Dir, TileNo) of
 		false ->
-			glob:sendToTile(TileNo - dir_factor(Dir), Dir);
+			glob2:sendToTile(TileNo - dir_factor(Dir), Dir);
 		true ->
 			ok
 	end.

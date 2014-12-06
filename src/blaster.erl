@@ -23,7 +23,7 @@ blastloop( Chance )->
     			2 ->
     				Num = glob:regformat(random:uniform(16)),		
     				%debug:debug
-    				%io:format("BLASTER: Killing tile: ~p! ~n",[Num]),
+    				io:format("BLASTER: Killing tile: ~p! ~n",[Num]),
     				case whereis(Num) of
 						undefined ->
 							debug:debug("BLASTER: Could not locate tile ~p.~n",[Num]);

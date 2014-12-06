@@ -1,5 +1,3 @@
-% Author: Brecht Gosselé, r0259849
-
 -module(gui).
 
 -export([display/0]).
