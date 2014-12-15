@@ -12,9 +12,10 @@ In order to handle failing tiles without the gameplay being discernably disturbe
 
 \section{Task 3: tile concurrency protocol}
 
-To make the communication between manager and tiles fully concurrent, the tiles send a \texttt{tileReady} message when they finish their computations after an command to move. It does this just before propagating the command to the next tile. The manager counts the incoming \texttt{tileReady} messages until it has received 16 of them.\\
+To make the communication between manager and tiles fully concurrent, the tiles send a \texttt{tileReady} message when they finish their computations after a command to move. It does this just before propagating the command to the next tile. The manager counts the incoming \texttt{tileReady} messages until it has received 16 of them.\\
 At the same time, the manager also keeps track if it has already received a \texttt{sendData} request from the gui. Only when both conditions are satisfied, the manager launches a collector and sends the collected data to the gui.
-\\The number of received \texttt{tileReady} messages as well as whether a \texttt{sendData} request has been received, are passed as a parameter in the \texttt{manageloop} function of the manager.
+\\The number of received \texttt{tileReady} messages as well as whether a \texttt{sendData} request has been received, are passed as a parameter in the \texttt{manageloop} function of the manager.\\\\
+When all tiles are ready, the manager also sends a \texttt{sync} message to all tiles to notify them. Upon receiving this, the tiles reset their \texttt{Merged} value to \texttt{false}. The manager sends these messages right before spawning the collector.
 
 
 \end{document}

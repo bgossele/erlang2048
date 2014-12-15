@@ -70,6 +70,7 @@ launchtile(Id, Value, Merged) ->
 	glob:registerName(glob:regformat(Id),spawn_link(tile, tilelife, [Id, Value, Merged])).
 
 launchcollector() ->
+	spawn( fun() -> broadcaster( 16, sync) end), %Notify tiles that round is over.
 	Basetuple = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 	PidCollector = spawn( fun() -> collect( 0, Basetuple ) end),
 	glob:registerName( collector, PidCollector ),

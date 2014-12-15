@@ -29,10 +29,7 @@ tilelife(Id, CurrentValue, Merged)->
 			NextMerged = Merged;
 		{yourValue, Repl} ->
 			NextValue = CurrentValue,
-			case Repl of
-				collector -> NextMerged = false; %tile now knows the round is over. Reset to false for next round.
-				_ -> NextMerged = Merged
-			end,
+			NextMerged = Merged,
 			Repl ! {tilevalue, Id, CurrentValue, Merged};
 		{setvalue, Future, NewMerged} ->
 			NextValue = Future,
@@ -48,7 +45,10 @@ tilelife(Id, CurrentValue, Merged)->
 					NextValue = 0,
 					NextMerged = Merged
 			end,
-			propagate(Dir, Id)
+			propagate(Dir, Id);
+		sync -> %Round is over, reset Merged value
+			NextValue  = CurrentValue,
+			NextMerged = false
 	end,
 	tilelife(Id, NextValue, NextMerged).
 
