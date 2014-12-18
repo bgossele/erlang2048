@@ -13,7 +13,7 @@ debug( S, L ) ->
 	end.
 
 % change this to enable debugging
-isdebug() -> true.
+isdebug() -> false.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%
