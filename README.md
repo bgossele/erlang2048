@@ -1,7 +1,7 @@
 erlang2048
 ==========
 
-An Erlang-implementation of the popular game 2048. It focusses on concurrency and fault-tolerance, and was a project for the course [Comparative Programming Languages](https://onderwijsaanbod.kuleuven.be/syllabi/e/H0S01AE.htm#activetab=doelstellingen_idp11777680) at KU Leuven.
+An Erlang-implementation of the popular game 2048. It focusses on concurrency and fault-tolerance, and was a project for the course [Comparative Programming Languages](https://onderwijsaanbod.kuleuven.be/syllabi/e/H0S01AE.htm) at KU Leuven.
 
 To compile everything in the /src folder, execute `erlc *.erl` (Unix) or `erl -make` (Windows).
 
